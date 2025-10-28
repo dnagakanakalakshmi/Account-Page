@@ -1,6 +1,5 @@
 import { json } from "@remix-run/node";
 import { PrismaClient } from "@prisma/client";
-import shopify from "../shopify.server"
 
 const prisma = new PrismaClient();
 
