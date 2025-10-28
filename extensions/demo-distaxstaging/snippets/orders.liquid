@@ -1,0 +1,274 @@
+{{ 'orderDetailPage.css' | asset_url | stylesheet_tag }}
+<div class="orders-main-container">
+  {% if customer.orders.size > 0 %}
+  <div class="content-heading">Order History</div>
+    <div class="orderContainer" id="orderContainer">
+      {% for order in customer.orders %}
+        <div class="eachOrder order-page-item" data-order-index="{{ forloop.index0 }}">
+          <div class="orderHeadings">
+            <div class="orderId"> 
+              <span class="spaces">
+                <span id="ID">ORDER ID</span>
+                <span>{{ order.name }}</span>
+              </span>
+              <div class="orderDate">•</div>
+              <div class="orderDate">{{ order.created_at | date: '%B %d, %Y' }}</div>
+            </div>
+            <div class="amount">AMOUNT</div>
+            <div class="status">STATUS</div>
+          </div>
+          <div class="OrderedItems">
+            {% for items in order.line_items %}
+              <div class="itemsContainer">
+                <div class="item-img-title">
+                  <div class="itemImage"><img src="{{ items.image | image_url }}" alt="Ordered_Product_Image"></div>
+                  <div class="itemTitle">{{ items.title }}</div>
+                </div>
+                <div class="itemPrice">{{ items.original_price | money_with_currency }}</div>
+                {% if order.cancelled %}
+                  {% if order.financial_status == 'refunded' %}
+                    <div class="itemStatus" style="color:#1A8908">{{ order.financial_status }}</div>
+                  {% else %}
+                     <div class="itemStatus" style="color:#FDC028">Cancelled</div>
+                  {% endif %}
+                {% else %}
+                    {% if order.financial_status == 'refunded' %}
+                      <div class="itemStatus" style="color:#1A8908">{{ order.financial_status }}</div>
+                    {% elsif order.fulfillment_status == 'unfulfilled' %}
+                       <div class="itemStatus" style="color:#FDC028">Pending</div>
+                    {% elsif order.fulfillment_status == 'fulfilled' %}
+                      <div class="itemStatus" style="color:#FDC028">In Transit</div>
+                    {% elsif order.fulfillment_status == 'complete' %}
+                      <div class="itemStatus" style="color:#FDC028">Delivered</div>
+                    {%  endif %}
+                {% endif %}
+              </div>
+            {% endfor %}
+            <div class="orderAction">
+              <button
+                class="view-details"
+                onclick="showLogs({{forloop.index0}})"
+                data-order-index="{{ forloop.index0 }}"
+              >
+                View Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="order-details-layout order-details hidden" data-order-index="{{ forloop.index0 }}">
+          <div class="order-header">
+            <div class="details">Order Details</div>
+            <div class="orderCreated">•</div>
+            <div class="orderCreated">{{ order.created_at | date: '%B %d, %Y' }}</div>
+            <div class="orderCreated">•</div>
+            {% comment %} <div class="credits">Credits earned on this order : <span>50 points</span></div> {% endcomment %}
+            <button
+              class="back-button"
+              onclick="showProducts({{  forloop.index0 }})"
+              data-order-index="{{ forloop.index0 }}"
+            >
+              Back to List
+            </button>
+          </div>
+          <div class="divider-line"></div>
+
+          {% assign step = 1 %}
+          {% if order.fulfillment_status == 'unfulfilled' %}
+            {% assign step = 1 %}
+          {% endif %}
+          {% if order.fulfillment_status == 'scheduled' %}
+            {%  assign step = 2 %}
+          {%  endif %}
+          {% if order.fulfillment_status == 'fulfilled' %}
+            {% assign step = 3 %}
+          {% elsif order.fulfillment_status == 'complete' %}
+            {% assign step = 4 %}
+          {% endif %}
+
+          <div class="progress-container">
+            {% for i in (1..4) %}
+              <div
+                class="progress-circle {% if i <= step %}completed{% endif %}"
+                id="step{{ i }}"
+                style="position: relative"
+              >
+                <div class="progress-step {% if i <= step %}completed{% endif %}" id="step{{ i }}">
+                  <span class="step-number">
+                    {% if i <= step %}
+                      <svg width="30" height="30" viewBox="35 0 30 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M57.6663 6.83334L48.4997 16L44.333 11.8333" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                      </svg>
+                    {% else %}
+                      0{{ i }}
+                    {% endif %}
+                  </span>
+                </div>
+                <span class="step-content">
+                  {% case i %}
+                    {% when 1 -%}
+                      Order received
+                    {% when 2 -%}
+                      Processing
+                    {% when 3 -%}
+                      Dispatched
+                    {% when 4 -%}
+                      Delivered
+                  {% endcase %}
+                </span>
+              </div>
+              {% if i < 4 %}
+                <div class="progress-line {% if i < step %}completed{% endif %}" id="line{{ i }}"></div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <div class="info-boxes">
+            <div class="shipping-box">
+              <div class="shipping_title"><span>SHIPPING ADDRESS</span></div>
+              <div class="divider-line" style="max-height:10px"></div>
+              <div class="customer-address">
+                <div class="customer-name">{{ customer.first_name }}</div>
+                <div class="customer-default">{{ customer.default_address.address1 }}</div>
+                <div class="customer-contact">
+                  <div class="customer-phone">
+                    <div class="headings">PHONE:</div>
+                    <div>{{ customer.default_address.phone }}</div>
+                  </div>
+                  <div class="customer-phone">
+                    <div class="headings">EMAIL:</div>
+                    <div class="customer-email">{{ customer.email }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="price-box">
+              <div class="price-box-heading">
+                <div class="order_Id">
+                  <div id="orderId">ORDER ID:</div>
+                  <div id="order-num">{{ order.name }}</div>
+                </div>
+                <div class="payment">
+                  <div id="payment-heading">PAYMENT METHOD:</div>
+                  <div id="payment-method">{{ order.gateway }}</div>
+                </div>
+              </div>
+              <div class="divider-line"></div>
+              <div class="price-details">
+                <div class="price-subdata">
+                  <div class="subdata-heading">Subtotal:</div>
+                  <div class="subdata-content">{{ order.subtotal_price | money_with_currency }}</div>
+                </div>
+                <div class="divider-line"></div>
+                <div class="price-subdata">
+                  <div class="subdata-heading">Discount</div>
+                  <div class="subdata-content">{{ order.total_discounts | money_with_currency }}</div>
+                </div>
+                <div class="divider-line"></div>
+                <div class="price-subdata">
+                  <div class="subdata-heading">Shipping</div>
+                  <div class="subdata-content">
+                    {{ order.total_shipping_price_set.shop_money.amount | money_with_currency }}
+                  </div>
+                </div>
+                <div class="divider-line"></div>
+                <div class="price-subdata">
+                  <div class="total">Total</div>
+                  <div class="total-amount">{{ order.total_price | money_with_currency }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="orderStatus">
+             <button onclick="view_product(this)" data-url="{{ order.order_status_url }}">Track Order</button>
+            <button id="buy-again-button" class="btn" onclick="handleBuyAgain(this)" >
+                Reorder
+            </button>
+            {% unless order.fulfillment_status == 'fulfilled'
+              or order.fulfillment_status == 'shipped'
+            %}
+              {% if order.cancelled %}
+                <button class="cancel-order-button" data-order-id="{{ order.id }}">Order Cancelled</button>
+              {% else %}
+                <button
+                  class="cancel-order-button"
+                  id="cancelOrder"
+                  data-order-id="{{ order.id }}"
+                  onclick="showOrderDeletePop({{ order.id }})"
+                >
+                  Cancel Order
+                </button>
+              {% endif %}
+            {% endunless %}
+            <div id="deleteorderpopupModal-{{ order.id }}" class="deletecustom-modal" style="display: none;">
+              <div class="deletecustom-modal-content">
+                <img src="{{'delete.png' | asset_url}}" width="103px" height="79px">
+                <div>Are you sure you want to Cancel Order?</div>
+                <div class="deletecustom-modal-actions">
+                  <div>
+                    <button onclick="closeOrderDeletePop({{ order.id }})" class="deletecancel-btn">Cancel</button>
+                  </div>
+                  <div>
+                    <button class="deleteconfirm-btn" data-order-id="{{ order.id }}" onclick="cancelOrder(this,'{{ shop.url }}')">
+                      Cancel Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ordered-products">
+            {% for item in order.line_items %}
+              <div class="ordered-product">
+                <img src="{{ item.image | image_url }}" alt="{{ item.title }}">
+                <div class="product-info">
+                  <div class="item-title">{{ item.title }}</div>
+                  <div class="item-data">
+                    <div class="item-price">
+                      Price: <span>{{ item.original_price | money_with_currency }}</span>
+                    </div>
+                    <div class="item-price">|</div>
+                    <div class="item-price">
+                      Qty: <span>{{ item.quantity }}</span>
+                    </div>
+                  </div>
+
+                  <div class=".order-ratings">{{ item.product.metafields.judgeme.badge }}</div>
+
+                  <button class="view-product" onclick="view_product(this)" data-url="{{ item.url }}" data-variant-id="{{ item.variant_id }}">
+                    View Product
+                  </button>
+                  <button id="buy-again-button" class="btn" onclick="handleSingleProduct(this)" data-variant-id="{{ item.variant_id }}">
+                      Reorder
+                  </button> 
+                </div>
+              </div>
+              {% unless forloop.last %}
+                <div class="divider-line"></div>
+              {% endunless %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="pagination">
+      <button id="prevPage" onclick="prevPage()" class="page-btn nav-btn">&lt;</button>
+      <div id="pageNumbers" class="page-numbers"></div>
+      <button id="nextPage" onclick="nextPage()" class="page-btn nav-btn">&gt;</button>
+    </div>
+  {% else %}
+    <div class="no-orders">
+       <img src="{{'No_orders.png' | asset_url}}" width="281px" height="168px"/>
+      <div class="no-orders-button"><a href="/collections/all">Continue Shopping</a></div>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .hidden {
+    display: none;
+  }
+</style>
+
+<script src="{{  'orders.js' | asset_url }}" defer></script>
+

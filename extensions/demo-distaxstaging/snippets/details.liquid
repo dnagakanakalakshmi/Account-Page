@@ -1,0 +1,215 @@
+<script>
+  // Profile Edit Functions
+  function profileEdit() {
+    const editContainer = document.querySelector('.edit-profile');
+    const mainContainer = document.querySelector('.profile-main-container');
+    editContainer.style.display = 'flex';
+    mainContainer.style.display = 'none';
+  }
+  function profileClose() {
+    const editContainer = document.querySelector('.edit-profile');
+    const mainContainer = document.querySelector('.profile-main-container');
+    mainContainer.style.display = 'flex';
+    editContainer.style.display = 'none';
+  }
+ 
+
+  // Profile Save Function
+  function profileSave(event) {
+    event.preventDefault();
+    const firstName = document.getElementsByName('customer[first_name]')[0]?.value || '';
+    const lastName = document.getElementsByName('customer[last_name]')[0]?.value || '';
+    const gender = document.getElementsByName('gender')[0]?.value || '';
+    const dob = document.getElementsByName('dob')[0]?.value || '';
+    const phone = document.getElementsByName('phone')[0]?.value || '';
+
+    fetch('/apps/account-page/app/apiaccount', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: '{{ customer.id }}',
+        firstName,
+        lastName,
+        phone,
+        gender,
+        dob,
+        storeUrl: '{{ shop.url }}',
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          document.querySelector('.profile-names').textContent = `${firstName} ${lastName}`;
+          document.querySelector('.profile-gender').textContent = `${gender}`;
+          document.querySelector('.profile-dob').textContent = `${dob}`;
+          document.querySelector('.profile-contact').textContent = `${phone}`;
+          profileClose();
+        } else {
+          document.querySelector('.edit-submit').textContent = 'Oops, Try Again';
+        }
+      })
+      .catch((error) => {
+        console.error('Fetch error:', error);
+      });
+  }
+
+
+
+</script>
+
+<div class="profile-main-container">
+  <div class="content-heading">Profile </div>
+  <div class="profile-details-container">
+    <div class="profile-details-display">
+      <div class="profile-names">
+        {{ customer.first_name }}
+        {{ customer.last_name }}
+      </div>
+      <div class="profile-gender">{{ customer.metafields.profile.gender }}</div>
+      <div class="profile-email profile-details">{{ customer.email }}</div>
+      <div class="profile-contact profile-details">{{ customer.phone }}</div>
+      <div class="profile-details profile-dob">{{ customer.metafields.profile.dob }}</div>
+    </div>
+    
+    <div class="edit-icon" onclick="profileEdit()">
+      <!-- SVG Icon -->
+      <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M8.16669 13.3618L12.8334 13.3618" stroke="#565656" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+   
+  </div>
+
+  <!-- Default Address Container -->
+  <div class="profile-default-address">
+    <div class="profile-address-container profile-details-container">
+      <div class="profile-address-display">
+
+        <div class="profile-address">
+          {%  if customer.default_address.id %}
+            Default
+          {% else %}
+            No Address Added
+          {% endif %}
+        </div>
+          <div id="default-address-{{ customer.default_address.id }}" class="saving-address">
+            <div class="profile-address-name">
+              {{ customer.default_address.first_name }}
+              {{ customer.default_address.last_name }}
+            </div>
+            <address class="profile-address-line profile-details">
+              {% if customer.default_address.company != blank %}
+                {{ customer.default_address.company -}}
+                <br>
+              {% endif %}
+              {% if customer.default_address.address1 != blank %}
+                {{ customer.default_address.address1 -}}
+                <br>
+              {% endif %}
+              {% if customer.default_address.address2 != blank %}
+                {{ customer.default_address.address2 -}}
+                <br>
+              {% endif %}
+              {% if customer.default_address.city != blank %}
+                {{ customer.default_address.city }},
+              {% endif %}
+              {% if customer.default_address.province != blank %}
+                {{ customer.default_address.province -}}
+                <br>
+              {% endif %}
+              {% if customer.default_address.country != blank %}
+                {{ customer.default_address.country -}}
+                <br>
+              {% endif %}
+              {% if customer.default_address.zip != blank %}
+                {{ customer.default_address.zip }}
+              {% endif %}
+            </address>
+            {% if customer.default_address.phone != blank %}
+              <div class="profile-details">{{ customer.default_address.phone }}</div>
+            {% endif %}
+          </div>
+      </div>
+      {% if customer.default_address.id %}
+        <div class="edit-icon" onclick="addressEdit({{ customer.default_address.id }}, {{ customer.default_address | json | escape }}, 'address-block-profile-', {{ customer.id }},false,'{{ shop.url }}')">
+          <!-- SVG Icon -->
+          <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M8.16669 13.3618L12.8334 13.3618" stroke="#565656" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Edit Profile Container -->
+<div class="edit-profile" style="display:none">
+  <div class="content-heading">Profile</div>
+  <div class="profile-details-container">
+    <div class="profile-details-display">
+      <label class="edit-headings">Name</label>
+      <div class="row-flex">
+        <input
+          type="text"
+          class="input-fields"
+          value="{{ customer.first_name }}"
+          name="customer[first_name]"
+          placeholder="first name"
+        >
+        <input
+          type="text"
+          class="input-fields"
+          value="{{ customer.last_name }}"
+          name="customer[last_name]"
+          placeholder="last name"
+        >
+      </div>
+      <div class="row-flex">
+        <div class="col-flex">
+          <label class="edit-headings">Gender</label>
+          <input
+            type="text"
+            class="input-fields"
+            value="{{ customer.metafields.profile.gender | default: '' }}"
+            placeholder="gender"
+            name="gender"
+          >
+        </div>
+        <div class="col-flex">
+          <label class="edit-headings">Date of Birth</label>
+          <input
+            type="date"
+            class="input-fields"
+            value="{{ customer.metafields.profile.dob | default: '' }}"
+            name="dob"
+          >
+        </div>
+      </div>
+      <label class="edit-headings">Email address</label>
+      <input type="email" class="input-fields" value="{{ customer.email }}" readonly>
+      <label class="edit-headings">Phone number</label>
+      <input
+        type="tel"
+        pattern="^\+?[\d\s\-\(\)]{10,20}$"
+        class="input-fields"
+        name="phone"
+        value="{{ customer.phone }}"
+      >
+      <div class="btn-form">
+        <span class="edit-close" onclick="profileClose()">Back</span>
+        <button type="submit" class="edit-submit" onclick="profileSave(event)">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% assign default_address = customer.default_address %}
+
+
+
+<div class="edit-address-form-default">
+</div>

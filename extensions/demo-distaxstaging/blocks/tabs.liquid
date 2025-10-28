@@ -1,0 +1,348 @@
+{% if template.name == 'account' %}
+  <!-- Prevent default account content flash: add a scoped loading class and hide account-like elements until our UI is ready -->
+  {% comment %} <style>
+    /* Hide only div elements with class containing "account" while our UI loads.
+       This avoids hiding header or other non-div elements. Exclude our injected container. */
+    body.account-loading div[class*="account"]:not(#custom-account-content):not(#custom-account-content *) {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  </style> {% endcomment %}
+  <script>
+    // Apply the loading marker as early as possible.
+    try {
+      document.body.classList.add('account-loading');
+    } catch (e) {
+      // If body isn't available yet, wait for DOMContentLoaded.
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('account-loading');
+      });
+    }
+  </script>
+  {{ 'tabs.css' | asset_url | stylesheet_tag }}
+  <div id="custom-account-content">
+    <div class="Account-loader">
+      <div class="loader-spinner"> </div>
+    </div>
+  </div>
+  <script>
+    const container = document.getElementById('custom-account-content');
+    const main = document.querySelector('main') || document.getElementById('MainContent');
+    if (main && container) {
+      const target = Array.from(main.children).find((el) => el.className && el.className.includes('account'));
+      if (target) {
+        main.insertBefore(container, target);
+      } else {
+        main.insertBefore(container, main.firstChild);
+      }
+
+      // Immediately hide existing account-like elements so the default account page
+      // doesn't flash while we build our custom UI. Exclude our injected container.
+      // Immediately hide existing account-like elements so the default account page
+      // doesn't flash while we build our custom UI. The surrounding `if (main && container)`
+      // guard makes this safe — `querySelectorAll` and `closest` operate on Elements and
+      // will not throw here, so the extra try/catch is unnecessary.
+      const nodeList = main.querySelectorAll('div[class*="account"]');
+      Array.from(nodeList)
+        .filter(el => !el.closest('#custom-account-content'))
+        .forEach(el => el.style.display = 'none');
+
+      // Provide default settings immediately and initialize UI so user sees our layout
+      // quickly while the real settings are fetched and applied.
+      window.accountSettings = window.accountSettings || {
+        menuTabs: [
+          { key: 'accountDetails', label: 'Account Details', enabled: true, link: '' },
+          { key: 'addresses', label: 'Addresses', enabled: true, link: '' },
+          { key: 'orders', label: 'Orders', enabled: true, link: '' }
+        ],
+        cancelOrderBehavior: 'direct',
+        script: null
+      };
+      if (typeof initializePage === 'function') {
+        try { initializePage(); } catch (e) { console.error('[tabs] initializePage early error', e); }
+      }
+    }
+  </script>
+  <div id="account-snippets" class="account-snippets" style="display: none;">
+    <div id="snippet-accountDetails" class="account-snippets-content">{% render 'details' %}</div>
+    <div id="snippet-address" class="account-snippets-content">{% render 'addresses' %}</div>
+    <div id="snippet-orders" class="account-snippets-content">{% render 'orders' %}</div>
+  </div>
+{% endif %}
+
+
+<script>
+   document.head.insertAdjacentHTML('beforeend', `
+    <style>
+      .tab-loader {
+        display:none;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding:60px;
+        margin:60px;
+      }
+      .tab-loader.active {
+        display: flex;
+      }
+      .tab-loader-spinner {
+        border: 4px solid rgb(121, 131, 230, 0.1);
+        border-top: 4px solid rgba(132, 143, 252, 1);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `);
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="tabLoader" class="tab-loader">
+      <div class="tab-loader-spinner"></div>
+    </div>
+  `);
+  
+  window.handleTabRedirect = function(url, tabName) {
+    const loader = document.getElementById('tabLoader');
+    const tabButton = document.querySelector(`.sub-menu[data-tab="${tabName}"]`);
+    
+    if (loader && tabButton) {
+      loader.classList.add('active');
+      document.querySelectorAll('.sub-menu').forEach((b) => b.classList.remove('active-menu'));
+      tabButton.classList.add('active-menu');
+
+      setTimeout(() => {
+        window.location.href = url;
+      }, 100);
+    } else {
+      window.location.href = url;
+    }
+  };
+
+  fetch(`/apps/account-page/app/apimenu?storeUrl={{ shop.domain }}`)
+    .then(res => res.json())
+    .then(data => {
+      const settings = {
+        menuTabs: data.reply.menuTabs || [],
+        cancelOrderBehavior: data.reply.cancelOrderBehavior || "direct",
+        script: data.reply.script || null
+      };
+      window.accountSettings = settings;
+      initializePage();
+    })
+    .catch(error => {
+      console.error('Error loading settings:', error);
+      window.accountSettings = {
+          menuTabs: [
+            {
+              key: "accountDetails",
+              label: "Account Details",
+              enabled: true,
+              link: ""
+            },
+            {
+              key: "addresses",
+              label: "Addresses",
+              enabled: true,
+              link: ""
+            },
+            {
+              key: "orders",
+              label: "Orders",
+              enabled: true,
+              link: ""
+            }
+          ],
+          cancelOrderBehavior: "direct",
+          script: null
+        };
+      initializePage();
+  });
+
+  function initializePage() {
+    // make initializePage idempotent to prevent double initialization
+    if (window._tabsInitialized) return;
+    window._tabsInitialized = true;
+  
+    window.showPop = function () {
+      const popup = document.getElementById('popupModal');
+      if (popup) popup.style.display = 'flex';
+    };
+
+    window.closePop = function () {
+      const popup = document.getElementById('popupModal');
+      if (popup) popup.style.display = 'none';
+    };
+   
+    if (window.location.pathname !== '/account') return;
+
+    const getSnippet = (id) => {
+      const el = document.getElementById(`snippet-${id}`);
+      return el ? el.innerHTML : '';
+    };
+
+    const main = document.querySelector('main') || document.getElementById('MainContent');
+
+    if (!main || !container) return;
+
+    const tabButtons = window.accountSettings.menuTabs
+    .filter(tab => tab.enabled && (tab.link || 
+      (['accountDetails', 'addresses', 'orders', 'wishlist', 'subscriptions'].includes(tab.key))))
+    .map(tab => {
+      if (tab.link) {
+        return `
+          <button class="sub-menu" data-tab="${tab.key}" onclick="handleTabRedirect('${tab.link}', '${tab.key}')">
+            <span class="tab-title">${tab.label}</span>
+          </button>
+        `;
+      } else {
+        return `
+          <button class="sub-menu" data-tab="${tab.key}">
+            <span class="tab-title">${tab.label}</span>
+          </button>
+        `;
+      }
+    });
+
+    tabButtons.push(`
+      <button class="sub-menu" onclick="showPop()">
+        <span class="tab-title">Logout</span>
+      </button>
+    `);
+
+    const tabContents = window.accountSettings.menuTabs
+      .filter(tab => tab.enabled && !tab.link)
+      .map(tab => {
+        const snippetId = tab.key === 'accountDetails' ? 'accountDetails' : 
+                          tab.key === 'addresses' ? 'address' : 
+                          tab.key === 'orders' ? 'orders' : 
+                          tab.key === 'wishlist' ? 'wishlist' : 
+                          tab.key === 'subscriptions' ? 'subscription' : null;
+        
+        if (snippetId) {
+          return `
+            <div class="menu-content" id="${tab.key}" style="display:none">
+              <button class="back-to-menu" onclick="goBackToMenu()">← Back</button>
+              ${getSnippet(snippetId)}
+            </div>
+          `;
+        }
+        return '';
+    })
+    .filter(Boolean);
+   
+    container.innerHTML = `
+      <div class="account-main-container">
+        <div class="tab-container">
+          <div class="tab-menu">
+            ${tabButtons.join('')}
+          </div>
+        </div>
+        <div class="sub-tab-container">
+          ${tabContents.join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML += `
+      <div id="popupModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+          <img src="{{ 'logout.png' | asset_url }}" width="95px" height="58px"/>
+          <div>Are you sure you want to logout?</div>
+          <div class="custom-modal-actions">
+            <div>
+              <button onclick="closePop()" class="cancel-btn">Cancel</button>
+            </div>
+            <div>
+              <a href="/account/logout" class="confirm-btn">Yes, Log out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const firstTab = window.accountSettings.menuTabs.find(tab => tab.enabled && !tab.link);
+    if (firstTab) {
+      const firstTabButton = container.querySelector(`.sub-menu[data-tab="${firstTab.key}"]`);
+      if (firstTabButton) {
+        firstTabButton.classList.add('active-menu');
+        const firstTabContent = container.querySelector(`#${firstTab.key}`);
+        if (firstTabContent && window.innerWidth>=769) firstTabContent.style.display = 'block';
+      }
+    }
+
+    container.querySelectorAll('.sub-menu').forEach((btn) => {
+      btn.addEventListener('click', function(e) {
+        if (btn.dataset.tab && !btn.hasAttribute('onclick')) {
+          e.preventDefault();
+          if (window.innerWidth < 769) {
+            document.querySelector('.tab-container').style.display = 'none';
+          }
+          container.querySelectorAll('.menu-content').forEach((c) => (c.style.display = 'none'));
+          container.querySelectorAll('.sub-menu').forEach((b) => b.classList.remove('active-menu'));
+          const target = container.querySelector(`#${btn.dataset.tab}`);
+          if (target) target.style.display = 'block';
+          btn.classList.add('active-menu');
+        }
+      });
+    });
+
+    // Remove the temporary loading marker now that our UI is initialized
+    try {
+      document.body.classList.remove('account-loading');
+    } catch (e) {
+      console.error('[tabs] error removing account-loading class', e);
+    }
+  }
+
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+      document.querySelector('.tab-container').style.display = 'flex';
+
+      const activeTab = document.querySelector('.sub-menu.active-menu');
+      const tabName = activeTab ? activeTab.dataset.tab : 'details';
+
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+      const tabToShow = document.getElementById(tabName);
+      if (tabToShow) tabToShow.style.display = 'block';
+    } else {
+      document.querySelector('.tab-container').style.display = 'none';
+
+      const activeTab = document.querySelector('.sub-menu.active-menu');
+      const tabName = activeTab ? activeTab.dataset.tab : null;
+
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+      if (tabName) {
+        const tabToShow = document.getElementById(tabName);
+        if (tabToShow) tabToShow.style.display = 'block';
+      }
+    }
+  });
+
+  function goBackToMenu() {
+    if (window.innerWidth <= 768) {
+      document.querySelector('.tab-container').style.display = 'flex';
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+    }
+  }
+  
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Account Page Menu Tabs",
+  "target": "body",
+  "settings": []
+}
+{% endschema %}

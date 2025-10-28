@@ -1,0 +1,282 @@
+
+<script src="{{  'address2.js' | asset_url }}" async></script>
+
+<div class="main-address">
+  <div class="content-heading">My addresses</div>
+  <div class="default-address-page-container">
+    <div class="profile-address-container profile-details-container" id="address-{{ customer.default_address.id }}">
+      <div class="profile-address-display">
+        <div class="profile-address">
+          {%  if customer.default_address.id %}
+            Default
+          {% else %}
+            No Address Added
+          {% endif %}
+        </div>
+        <div class="saving-address">
+          <div class="profile-address-name ">
+            {{ customer.default_address.first_name }}
+            {{ customer.default_address.last_name }}
+          </div>
+          <address class="profile-address-line profile-details">
+            {% if customer.default_address.company != blank %}
+              {{ customer.default_address.company -}}
+              <br>
+            {% endif %}
+
+            {% if customer.default_address.address1 != blank %}
+              {{ customer.default_address.address1 -}}
+              <br>
+            {% endif %}
+
+            {% if customer.default_address.address2 != blank %}
+              {{ customer.default_address.address2 -}}
+              <br>
+            {% endif %}
+
+            {% if customer.default_address.city != blank %}
+              {{ customer.default_address.city }},
+            {% endif %}
+
+            {% if customer.default_address.province != blank %}
+              {{ customer.default_address.province -}}
+              <br>
+            {% endif %}
+
+            {% if customer.default_address.country != blank %}
+              {{ customer.default_address.country -}}
+              <br>
+            {% endif %}
+
+            {% if customer.default_address.zip != blank %}
+              {{ customer.default_address.zip }}
+            {% endif %}
+          </address>
+
+          {% if customer.default_address.phone != blank %}
+            <div class="profile-details">{{ customer.default_address.phone }}</div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="address-icon">
+        {% if customer.default_address.id %}
+          <div class="edit-icon" onclick="addressEdit({{ customer.default_address.id }}, {{ customer.default_address | json | escape }}, 'address-block-', {{ customer.id }},false,'{{ shop.url }}')">
+            <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M8.16669 13.3618L12.8334 13.3618" stroke="#565656" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <button type="submit" class="delete-icon" onclick="showDeletePop({{ customer.default_address.id }})">
+            <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.415 3.20923L11.0239 9.53691C10.9239 11.1536 10.874 11.9619 10.4687 12.5431C10.2684 12.8304 10.0104 13.0729 9.71128 13.2552C9.10623 13.6238 8.29634 13.6238 6.67657 13.6238C5.05466 13.6238 4.24371 13.6238 3.63824 13.2545C3.3389 13.0719 3.08087 12.829 2.88059 12.5412C2.47549 11.9591 2.42662 11.1496 2.32888 9.53064L1.94727 3.20923" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M1 3.20914H12.3613M9.24057 3.20914L8.80968 2.32026C8.52345 1.72981 8.38033 1.43458 8.13346 1.25046C8.0787 1.20962 8.02072 1.17329 7.96008 1.14183C7.68671 1 7.35862 1 6.70245 1C6.0298 1 5.69347 1 5.41556 1.14777C5.35397 1.18052 5.2952 1.21832 5.23985 1.26079C4.99012 1.45237 4.85062 1.7584 4.57162 2.37046L4.18933 3.20914" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M5.10303 10.1523L5.10303 6.36524" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M8.25879 10.1523L8.25879 6.36517" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <div
+            id="deletepopupModal-{{ customer.default_address.id }}"
+            class="deletecustom-modal"
+            style="display: none;"
+          >
+            <div class="deletecustom-modal-content">
+              <img src="{{'delete.png' | asset_url}}" width="103px" height="79px">
+              <div>Are you sure you want to delete?</div>
+              <div class="deletecustom-modal-actions">
+                <div>
+                  <button onclick="closeDeletePop({{ customer.default_address.id }})" class="deletecancel-btn">
+                    Cancel
+                  </button>
+                </div>
+                <div>
+                  <form
+                    class="address-delete-form"
+                    method="post"
+                    action="/account/addresses/{{ customer.default_address.id }}"
+                    onsubmit="handleDeleteSubmit(event,{{ customer.default_address.id }},{{ customer.id }},'{{ shop.url }}')"
+                  >
+                    <input type="hidden" name="_method" value="delete">
+                    <button type="submit" class="deleteconfirm-btn">Delete</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="other-adress">
+    <div class="content-heading">Other</div>
+    <div class="other-address-container">
+      {% for address in customer.addresses %}
+        {% if address.id != customer.default_address.id %}
+          <div class=" profile-details-container" id="address-{{address.id }}">
+            <div class="profile-address-display">
+              <div class="profile-address-name">
+                {{ address.first_name }}
+                {{ address.last_name }}
+              </div>
+              <address class="profile-address-line profile-details">
+                {% if address.company != blank %}
+                  {{ address.company -}}
+                  <br>
+                {% endif %}
+
+                {% if address.address1 != blank %}
+                  {{ address.address1 -}}
+                  <br>
+                {% endif %}
+
+                {% if address.address2 != blank %}
+                  {{ address.address2 -}}
+                  <br>
+                {% endif %}
+
+                {% if address.city != blank %}
+                  {{ address.city }},
+                {% endif %}
+
+                {% if address.province != blank %}
+                  {{ address.province -}}
+                  <br>
+                {% endif %}
+
+                {% if address.country != blank %}
+                  {{ address.country -}}
+                  <br>
+                {% endif %}
+
+                {% if address.zip != blank %}
+                  {{ address.zip }}
+                {% endif %}
+              </address>
+
+              {% if address.phone != blank %}
+                <div class="profile-details">{{ address.phone }}</div>
+              {% endif %}
+            </div>
+            <div class="address-icon">
+              <div class="edit-icon" onclick="addressEdit({{ address.id }},{{ address | json | escape }}, 'address-block-',{{ customer.id }},true,'{{ shop.url }}')">
+                <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.20968 2.79498C8.64437 2.32401 8.86172 2.08853 9.09268 1.95117C9.64996 1.61974 10.3362 1.60943 10.9027 1.92398C11.1375 2.05435 11.3616 2.2832 11.8096 2.74091C12.2577 3.19861 12.4817 3.42747 12.6093 3.66734C12.9172 4.24612 12.9072 4.94709 12.5827 5.51637C12.4482 5.7523 12.2177 5.97433 11.7567 6.41838L6.27122 11.7018C5.39753 12.5433 4.96069 12.9641 4.41472 13.1773C3.86876 13.3906 3.26856 13.3749 2.06815 13.3435L1.90482 13.3392C1.53938 13.3296 1.35666 13.3249 1.25045 13.2043C1.14423 13.0838 1.15873 12.8977 1.18773 12.5254L1.20348 12.3233C1.28511 11.2755 1.32592 10.7517 1.53052 10.2808C1.73511 9.80985 2.08802 9.42748 2.79385 8.66275L8.20968 2.79498Z" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M7.58337 2.86182L11.6667 6.94515" stroke="#565656" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M8.16669 13.3618L12.8334 13.3618" stroke="#565656" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <button class="delete-icon" onclick="showDeletePop({{ address.id }})">
+                <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11.415 3.20923L11.0239 9.53691C10.9239 11.1536 10.874 11.9619 10.4687 12.5431C10.2684 12.8304 10.0104 13.0729 9.71128 13.2552C9.10623 13.6238 8.29634 13.6238 6.67657 13.6238C5.05466 13.6238 4.24371 13.6238 3.63824 13.2545C3.3389 13.0719 3.08087 12.829 2.88059 12.5412C2.47549 11.9591 2.42662 11.1496 2.32888 9.53064L1.94727 3.20923" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M1 3.20914H12.3613M9.24057 3.20914L8.80968 2.32026C8.52345 1.72981 8.38033 1.43458 8.13346 1.25046C8.0787 1.20962 8.02072 1.17329 7.96008 1.14183C7.68671 1 7.35862 1 6.70245 1C6.0298 1 5.69347 1 5.41556 1.14777C5.35397 1.18052 5.2952 1.21832 5.23985 1.26079C4.99012 1.45237 4.85062 1.7584 4.57162 2.37046L4.18933 3.20914" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M5.10303 10.1523L5.10303 6.36524" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8.25879 10.1523L8.25879 6.36517" stroke="#565656" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+
+              <div id="deletepopupModal-{{ address.id }}" class="deletecustom-modal" style="display: none;">
+                <div class="deletecustom-modal-content">
+                  <img src="{{'delete.png' | asset_url}}" width="103px" height="79px">
+                  <div>Are you sure you want to delete?</div>
+                  <div class="deletecustom-modal-actions">
+                    <div>
+                      <button onclick="closeDeletePop({{ address.id }})" class="deletecancel-btn">Cancel</button>
+                    </div>
+                    <div>
+                      <form
+                        class="address-delete-form"
+                        method="post"
+                        action="/account/addresses/{{ address.id }}"
+                        onsubmit="handleDeleteSubmit(event,{{ address.id }},{{ customer.id }},'{{ shop.url }}')"
+                      >
+                        <input type="hidden" name="_method" value="delete">
+                        <button type="submit" class="deleteconfirm-btn">Delete</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+      <div class="add-address">
+        <div class="add-icon-container" onclick="addressAdd()">
+          <img src="{{ 'add-01.svg' | asset_url }}" width="14" height="14">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="add-addresses" style="display:none">
+  <div class="content-heading">Add Address</div>
+  <div class="edit-details-container profile-details-container">
+    <div class=" profile-details-display">
+      <form
+        method="post"
+        action="/account/addresses"
+        id="add-address-form"
+        onsubmit="handleAddAddress(event,{{customer.id}},'{{ shop.url }}')"
+      >
+        <input type="hidden" name="form_type" value="customer_address">
+        <input type="hidden" name="utf8" value="✓">
+        <label for="" class="edit-headings">Name (*)</label>
+        <div class="row-flex">
+          <input type="text" class="input-fields" name="address[first_name]" placeholder="first name" required>
+          <input type="text" class="input-fields" name="address[last_name]" placeholder="last name">
+        </div>
+        <div class="row-flex">
+          <div class="col-flex">
+            <label class="edit-headings">Company</label>
+            <input type="text" class="input-fields" name="address[company]">
+          </div>
+          <div class="col-flex">
+            <label for="" class="edit-headings">Phone number (*)</label>
+            <input type="tel" pattern="^\+?[\d\s\-\(\)]{10,20}$" class="input-fields" name="address[phone]" required>
+          </div>
+        </div>
+        <label class="edit-headings">Address 1 (*)</label>
+        <textarea class="input-fields" name="address[address1]" required></textarea>
+        <label class="edit-headings">Address 2</label>
+        <textarea class="input-fields" name="address[address2]"></textarea>
+        <div class="row-flex">
+          <div class="col-flex">
+            <label for="" class="edit-headings">City (*)</label>
+            <input type="text" class="input-fields" name="address[city]" required>
+          </div>
+          <div class="col-flex">
+            <label for="" class="edit-headings">Country (*)</label>
+            <input type="text" class="input-fields" name="address[country]" required>
+          </div>
+        </div>
+        <div class="row-flex">
+          <div class="col-flex">
+            <label for="" class="edit-headings">Province</label>
+            <input type="text" class="input-fields" name="address[province]">
+          </div>
+          <div class="col-flex">
+            <label for="" class="edit-headings">Zip (*)</label>
+            <input type="text" class="input-fields" name="address[zip]" required>
+          </div>
+        </div>
+        <label class="edit-headings">
+          <input
+            type="checkbox"
+            name="address[default]"
+            value="1"
+          >
+          Set as default
+        </label>
+        <div class="btn-form">
+          <span class="edit-close" onclick="closeAddForm()">Back</span>
+          <button type="submit" class="edit-submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="address-form">
+</div>
