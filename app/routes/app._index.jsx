@@ -8,10 +8,11 @@ import {
   Banner,
   List,
   Link,
-
+  Button,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
+import { Link as RemixLink } from "@remix-run/react";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -38,6 +39,13 @@ export default function Index() {
                   track purchases all in one place. Fully customizable and
                   perfectly integrated with your Shopify theme.
                 </Text>
+                <div style={{ marginTop: '16px' }}>
+                  <RemixLink to="/app/menuSettings" style={{ textDecoration: 'none' }}>
+                    <Button>
+                      Customize Menu Tabs Settings
+                    </Button>
+                  </RemixLink>
+                </div>
               </BlockStack>
             </Card>
           </Layout.Section>
@@ -75,7 +83,7 @@ export default function Index() {
                 </Text>
                 <Text as="p">
                   In the theme editor, click <b>App embeds</b> (the puzzle icon),
-                  find <b>Dista App - Account Page</b>, and enable it.
+                  find <b>Dista App - Account Page</b>, <b>Account Page Menu Tabs</b> and enable them.
                 </Text>
                 <Text as="h3" variant="headingMd">
                   3. Save and Publish

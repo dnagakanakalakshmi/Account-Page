@@ -1,0 +1,735 @@
+{% if template.name == 'account' %}
+  <script defer>
+    // Apply the loading marker as early as possible.
+    try {
+      document.body.classList.add('account-loading');
+    } catch (e) {
+      // If body isn't available yet, wait for DOMContentLoaded.
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.classList.add('account-loading');
+      });
+    }
+  </script>
+  <div id="custom-account-content">
+    <div class="Account-loader">
+      <div class="loader-spinner"></div>
+    </div>
+  </div>
+  <script defer>
+    const container = document.getElementById('custom-account-content');
+    const main = document.querySelector('main') || document.getElementById('MainContent');
+    if (main && container) {
+      const target = Array.from(main.children).find((el) => el.className && el.className.includes('account'));
+      if (target) {
+        main.insertBefore(container, target);
+      } else {
+        main.insertBefore(container, main.firstChild);
+      }
+
+      // Immediately hide existing account-like elements so the default account page
+      // doesn't flash while we build our custom UI. Exclude our injected container.
+      // Immediately hide existing account-like elements so the default account page
+      // doesn't flash while we build our custom UI. The surrounding `if (main && container)`
+      // guard makes this safe — `querySelectorAll` and `closest` operate on Elements and
+      // will not throw here, so the extra try/catch is unnecessary.
+      const nodeList = main.querySelectorAll('div[class*="account"]');
+      Array.from(nodeList)
+        .filter((el) => !el.closest('#custom-account-content'))
+        .forEach((el) => (el.style.display = 'none'));
+
+      // Provide default settings immediately and initialize UI so user sees our layout
+      // quickly while the real settings are fetched and applied.
+      window.accountSettings = window.accountSettings || {
+        menuTabs: [
+          { key: 'accountDetails', label: 'Account Details', enabled: true, link: '' },
+          { key: 'addresses', label: 'Addresses', enabled: true, link: '' },
+          { key: 'orders', label: 'Orders', enabled: true, link: '' },
+        ],
+        cancelOrderBehavior: 'direct',
+        script: null,
+      };
+      if (typeof initializePage === 'function') {
+        try {
+          initializePage();
+        } catch (e) {
+          console.error('[tabs] initializePage early error', e);
+        }
+      }
+    }
+  </script>
+  <div id="account-snippets" class="account-snippets" style="display: none;">
+    <div id="snippet-accountDetails" class="account-snippets-content">{% render 'details' %}</div>
+    <div id="snippet-address" class="account-snippets-content">{% render 'addresses' %}</div>
+    <div id="snippet-orders" class="account-snippets-content">{% render 'orders' %}</div>
+  </div>
+{% endif %}
+
+<script>
+   document.head.insertAdjacentHTML('beforeend', `
+    <style>
+      .tab-loader {
+        display:none;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.8);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding:60px;
+        margin:60px;
+      }
+      .tab-loader.active {
+        display: flex;
+      }
+      .tab-loader-spinner {
+        border: 4px solid rgb(0, 0, 0, 0.1);
+        border-top: 4px solid rgba(0, 0, 0, 1);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `);
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="tabLoader" class="tab-loader">
+      <div class="tab-loader-spinner"></div>
+    </div>
+  `);
+  
+  window.handleTabRedirect = function(url, tabName) {
+    const loader = document.getElementById('tabLoader');
+    const tabButton = document.querySelector(`.sub-menu[data-tab="${tabName}"]`);
+    
+    if (loader && tabButton) {
+      loader.classList.add('active');
+      document.querySelectorAll('.sub-menu').forEach((b) => b.classList.remove('active-menu'));
+      tabButton.classList.add('active-menu');
+
+      setTimeout(() => {
+        window.location.href = url;
+      }, 100);
+    } else {
+      window.location.href = url;
+    }
+  };
+
+  // Function to apply custom appearance styles
+  function applyCustomStyles(settings) {
+    const { colorPrimary, colorSecondary, colorTertiary, colorQuaternary, fontPrimary, fontSecondary, fontTertiary } = settings;
+    
+    // Create or update style element
+    let styleEl = document.getElementById('account-custom-styles');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'account-custom-styles';
+      document.head.appendChild(styleEl);
+    }
+    
+    // Build CSS with custom colors and fonts
+    styleEl.textContent = `
+      /* Primary Color Applications */
+      .tab-menu {
+        background-color: ${colorPrimary} !important;
+      }
+      .deleteconfirm-btn {
+        background-color: ${colorPrimary} !important;
+      }
+      .view-details,
+      .orderAction button {
+        background-color: ${colorPrimary} !important;
+      }
+      .confirm-btn {
+        background-color: ${colorPrimary} !important;
+      }
+      
+      /* Secondary Color Applications */
+      .active-menu .tab-title,
+      .sub-menu.active-menu .tab-title {
+        color: ${colorSecondary} !important;
+      }
+      .edit-submit, .edit-close, deletecancel-btn {
+        background-color: ${colorSecondary} !important;
+      }
+      .deletecancel-btn {
+        background-color: ${colorSecondary} !important;
+      }
+      .cancel-btn {
+        background-color: ${colorSecondary} !important;
+      }
+      .profile-names {
+        color: ${colorSecondary} !important;
+      }
+      .deleteconfirm-btn {
+        color: ${colorSecondary} !important;
+      }
+      .confirm-btn {
+        color: ${colorSecondary} !important;
+      }
+      .orderHeadings .amount,
+      .orderHeadings .status,
+      .orderHeadings .orderId span {
+        color: ${colorSecondary} !important;
+      }
+      .view-details,
+      .orderAction button {
+        color: ${colorSecondary} !important;
+      }
+      .back-button {
+        color: ${colorSecondary} !important;
+      }
+      .progress-step.completed {
+        background-color: ${colorSecondary} !important;
+      }
+      .progress-step {
+        border-color: ${colorSecondary} !important;
+      }
+      .progress-step .step-number {
+        color: ${colorSecondary} !important;
+      }
+      .progress-line.completed {
+        background-color: ${colorSecondary} !important;
+      }
+      .sub-tab-container {
+        scrollbar-color: ${colorSecondary} transparent !important;
+      }
+      .loader-spinner {
+        border-top-color: ${colorSecondary} !important;
+      }
+      .tab-loader-spinner {
+        border-top-color: ${colorSecondary} !important;
+      }
+      .page-number.active { 
+        background-color: ${colorSecondary} !important;
+      }
+      
+      /* Tertiary Color Applications */
+      .sub-menu .tab-title {
+        color: ${colorTertiary} !important;
+      }
+
+      /* Quaternary Color Applications */
+      .sub-menu.active-menu {
+        background-color: ${colorQuaternary} !important;
+      }
+      .tab-menu .sub-menu:hover {
+        background: ${colorQuaternary} !important;
+      }
+      
+      /* Font Size Applications */
+      ${fontPrimary ? `
+      .content-heading,
+      .details {
+        font-size: ${fontPrimary} !important;
+      }
+      ` : ''}
+      ${fontSecondary ? `
+      .tab-title,
+      .profile-names,
+      .edit-submit {
+        font-size: ${fontSecondary} !important;
+      }
+      ` : ''}
+      ${fontTertiary ? `
+      .orderHeadings .amount,
+      .orderHeadings .status,
+      .orderDate {
+        font-size: ${fontTertiary} !important;
+      }
+      ` : ''}
+    `;
+  }
+
+  fetch(`/apps/account-page/app/apimenu?storeUrl={{ shop.domain }}`)
+    .then(res => res.json())
+    .then(data => {
+      const settings = {
+        menuTabs: data.reply.menuTabs || [],
+        cancelOrderBehavior: data.reply.cancelOrderBehavior || "direct",
+        script: data.reply.script || null,
+        colorPrimary: data.reply.colorPrimary || "#f7f7ff",
+        colorSecondary: data.reply.colorSecondary || "#848ffc",
+        colorTertiary: data.reply.colorTertiary || "#565656",
+        colorQuaternary: data.reply.colorQuaternary || "#7983e61a",
+        fontPrimary: data.reply.fontPrimary || null,
+        fontSecondary: data.reply.fontSecondary || null,
+        fontTertiary: data.reply.fontTertiary || null,
+        logoutSvg: data.reply.logoutSvg || null,
+        deleteSvg: data.reply.deleteSvg || null,
+        noOrdersImage: data.reply.noOrdersImage || null
+      };
+      window.accountSettings = settings;
+      
+      // Apply custom colors dynamically
+      applyCustomStyles(settings);
+      
+      initializePage();
+      // After the page is initialized, replace default asset images with stored values (if present)
+      try {
+        replaceStoredImages();
+      } catch (e) {
+        console.warn('[tabs] replaceStoredImages failed', e);
+      }
+    })
+    .catch(error => {
+      console.error('Error loading settings:', error);
+      const defaultSettings = {
+          menuTabs: [
+            {
+              key: "accountDetails",
+              label: "Account Details",
+              enabled: true,
+              link: ""
+            },
+            {
+              key: "addresses",
+              label: "Addresses",
+              enabled: true,
+              link: ""
+            },
+            {
+              key: "orders",
+              label: "Orders",
+              enabled: true,
+              link: ""
+            }
+          ],
+          cancelOrderBehavior: "direct",
+          script: null,
+          colorPrimary: "#F7F7FF",
+          colorSecondary: "#848FFC",
+          colorTertiary: "#565656",
+          colorQuaternary: "#7983e61a"
+        };
+      window.accountSettings = defaultSettings;
+      applyCustomStyles(defaultSettings);
+      initializePage();
+  });
+  function setTabInUrl(tabKey) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('tab', tabKey);
+
+  // ✅ use replaceState instead of pushState to avoid cluttering browser history
+  // This allows the browser back button to go back to the previous page, not previous tabs
+  window.history.replaceState({ tab: tabKey }, '', url);
+}
+
+  function getTabFromUrl() {
+    return new URLSearchParams(window.location.search).get('tab');
+  }
+
+
+  function initializePage() {
+    // make initializePage idempotent to prevent double initialization
+    if (window._tabsInitialized) return;
+    window._tabsInitialized = true;
+  
+    window.showPop = function () {
+      const popup = document.getElementById('popupModal');
+      if (popup) popup.style.display = 'flex';
+    };
+
+    window.closePop = function () {
+      const popup = document.getElementById('popupModal');
+      if (popup) popup.style.display = 'none';
+    };
+   
+    if (window.location.pathname !== '/account') return;
+
+    const getSnippet = (id) => {
+      const el = document.getElementById(`snippet-${id}`);
+      return el ? el.innerHTML : '';
+    };
+
+    const main = document.querySelector('main') || document.getElementById('MainContent');
+
+    if (!main || !container) return;
+
+    const tabButtons = window.accountSettings.menuTabs
+    .filter(tab => tab.enabled && (tab.link || 
+      (['accountDetails', 'addresses', 'orders', 'wishlist', 'subscriptions'].includes(tab.key))))
+    .map(tab => {
+      if (tab.link) {
+        return `
+          <button class="sub-menu" data-tab="${tab.key}" onclick="handleTabRedirect('${tab.link}', '${tab.key}')">
+            <span class="tab-title">${tab.label}</span>
+          </button>
+        `;
+      } else {
+        return `
+          <button class="sub-menu" data-tab="${tab.key}">
+            <span class="tab-title">${tab.label}</span>
+          </button>
+        `;
+      }
+    });
+
+    tabButtons.push(`
+      <button class="sub-menu" onclick="showPop()">
+        <span class="tab-title">Logout</span>
+      </button>
+    `);
+
+    const tabContents = window.accountSettings.menuTabs
+      .filter(tab => tab.enabled && !tab.link)
+      .map(tab => {
+        const snippetId = tab.key === 'accountDetails' ? 'accountDetails' : 
+                          tab.key === 'addresses' ? 'address' : 
+                          tab.key === 'orders' ? 'orders' : 
+                          tab.key === 'wishlist' ? 'wishlist' : 
+                          tab.key === 'subscriptions' ? 'subscription' : null;
+        
+        if (snippetId) {
+          return `
+            <div class="menu-content" id="${tab.key}" style="display:none">
+              <button class="back-to-menu" onclick="goBackToMenu()">← Back</button>
+              ${getSnippet(snippetId)}
+            </div>
+          `;
+        }
+        return '';
+    })
+    .filter(Boolean);
+   
+    container.innerHTML = `
+      <div class="account-main-container">
+        <div class="tab-container">
+          <div class="tab-menu">
+            ${tabButtons.join('')}
+          </div>
+        </div>
+        <div class="sub-tab-container">
+          ${tabContents.join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML += `
+      <div id="popupModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-content">
+          <img src="{{ 'logout.png' | asset_url }}" width="95px" height="58px"/>
+          <div>Are you sure you want to logout?</div>
+          <div class="custom-modal-actions">
+            <div>
+              <button onclick="closePop()" class="cancel-btn">Cancel</button>
+            </div>
+            <div>
+              <a href="/account/logout" class="confirm-btn">Yes, Log out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    {% comment %} const firstTab = window.accountSettings.menuTabs.find(tab => tab.enabled && !tab.link);
+    if (firstTab) {
+      const firstTabButton = container.querySelector(`.sub-menu[data-tab="${firstTab.key}"]`);
+      if (firstTabButton) {
+        firstTabButton.classList.add('active-menu');
+        const firstTabContent = container.querySelector(`#${firstTab.key}`);
+        if (firstTabContent && window.innerWidth>=769) firstTabContent.style.display = 'block';
+      }
+    } {% endcomment %}
+    {% comment %} const urlTab = getTabFromUrl();
+
+const defaultTab =
+  window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link && tab.key === urlTab
+  ) ||
+  window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link
+  );
+
+if (defaultTab) {
+  const btn = container.querySelector(`.sub-menu[data-tab="${defaultTab.key}"]`);
+  const content = container.querySelector(`#${defaultTab.key}`);
+
+  if (btn) btn.classList.add('active-menu');
+  if (content && window.innerWidth >= 769) {
+    content.style.display = 'block';
+  }
+
+  // ensure URL is synced (important for first load)
+  setTabInUrl(defaultTab.key);
+} {% endcomment %}
+const urlTab = getTabFromUrl();
+
+// 🚨 IMPORTANT CHANGE:
+// Only auto-open a tab if:
+// 1) URL has ?tab
+// 2) OR screen is desktop
+let defaultTab = null;
+
+if (urlTab) {
+  defaultTab = window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link && tab.key === urlTab
+  );
+} else if (window.innerWidth >= 769) {
+  defaultTab = window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link
+  );
+} else if (window.innerWidth < 769) {
+  // Default to Account Details on mobile
+  defaultTab = window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link && tab.key === 'accountDetails'
+  ) || window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link
+  );
+}
+
+// 👉 If no defaultTab, stay on menu (mobile behavior)
+if (defaultTab) {
+  const btn = container.querySelector(`.sub-menu[data-tab="${defaultTab.key}"]`);
+  const content = container.querySelector(`#${defaultTab.key}`);
+
+  container.querySelectorAll('.sub-menu').forEach(b => b.classList.remove('active-menu'));
+  container.querySelectorAll('.menu-content').forEach(c => c.style.display = 'none');
+
+  // Always mark the default as visually active, but only show the content
+  // automatically on desktop or when a tab was explicitly requested via URL.
+  if (btn) btn.classList.add('active-menu');
+
+  if (content && (window.innerWidth >= 769 || urlTab)) {
+    // desktop or URL-driven: show content and hide menu on mobile when URL present
+    content.style.display = 'block';
+    if (window.innerWidth < 769) {
+      document.querySelector('.tab-container').style.display = 'none';
+    }
+  } else {
+    // mobile default: keep the menu visible and do not auto-open content
+    if (window.innerWidth < 769) {
+      document.querySelector('.tab-container').style.display = 'flex';
+    }
+  }
+
+  window.lastActiveTab = defaultTab.key; // Store default active tab
+
+  // Only sync URL when the tab came from the URL or when on desktop
+  if (urlTab || window.innerWidth >= 769) {
+    setTabInUrl(defaultTab.key);
+  }
+}
+
+{% comment %} const urlTab = getTabFromUrl();
+
+const defaultTab =
+  window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link && tab.key === urlTab
+  ) ||
+  window.accountSettings.menuTabs.find(
+    tab => tab.enabled && !tab.link
+  );
+
+if (defaultTab) {
+  const btn = container.querySelector(`.sub-menu[data-tab="${defaultTab.key}"]`);
+  const content = container.querySelector(`#${defaultTab.key}`);
+
+  // activate tab button
+  container.querySelectorAll('.sub-menu').forEach(b => b.classList.remove('active-menu'));
+  if (btn) btn.classList.add('active-menu');
+
+  // hide all contents
+  container.querySelectorAll('.menu-content').forEach(c => c.style.display = 'none');
+
+  // show content ALWAYS (desktop + mobile)
+  if (content) content.style.display = 'block';
+
+  // 👈 MOBILE FIX: hide menu when opening from URL
+  if (window.innerWidth < 769) {
+    document.querySelector('.tab-container').style.display = 'none';
+  }
+
+  setTabInUrl(defaultTab.key);
+} {% endcomment %}
+
+
+    {% comment %} container.querySelectorAll('.sub-menu').forEach((btn) => {
+      btn.addEventListener('click', function(e) {
+        if (btn.dataset.tab && !btn.hasAttribute('onclick')) {
+          e.preventDefault();
+          if (window.innerWidth < 769) {
+            document.querySelector('.tab-container').style.display = 'none';
+          }
+          container.querySelectorAll('.menu-content').forEach((c) => (c.style.display = 'none'));
+          container.querySelectorAll('.sub-menu').forEach((b) => b.classList.remove('active-menu'));
+          const target = container.querySelector(`#${btn.dataset.tab}`);
+          if (target) target.style.display = 'block';
+          btn.classList.add('active-menu');
+        }
+      });
+    }); {% endcomment %}
+    container.querySelectorAll('.sub-menu').forEach((btn) => {
+  btn.addEventListener('click', function(e) {
+    if (btn.dataset.tab && !btn.hasAttribute('onclick')) {
+      e.preventDefault();
+
+      setTabInUrl(btn.dataset.tab);
+      window.lastActiveTab = btn.dataset.tab; // Store the last opened tab
+
+      if (window.innerWidth < 769) {
+        document.querySelector('.tab-container').style.display = 'none';
+      }
+
+      container.querySelectorAll('.menu-content').forEach(c => c.style.display = 'none');
+      container.querySelectorAll('.sub-menu').forEach(b => b.classList.remove('active-menu'));
+
+      const target = container.querySelector(`#${btn.dataset.tab}`);
+      if (target) target.style.display = 'block';
+
+      btn.classList.add('active-menu');
+    }
+  });
+});
+
+
+
+    // Remove the temporary loading marker now that our UI is initialized
+    try {
+      document.body.classList.remove('account-loading');
+    } catch (e) {
+      console.error('[tabs] error removing account-loading class', e);
+    }
+    // Ensure any stored images are applied after the DOM is assembled
+    try {
+      replaceStoredImages();
+    } catch (e) {
+      console.warn('[tabs] replaceStoredImages failed', e);
+    }
+  }
+
+  // Replace hardcoded asset images with admin-provided SVG or image data (if available)
+  function replaceStoredImages() {
+    const s = window.accountSettings || {};
+
+    // Helper to set an element (img or container) to SVG markup or image src
+    function applyValueToElement(el, value, fallback) {
+      if (!el) return;
+      if (!value) {
+        if (fallback && el.tagName === 'IMG') el.src = fallback;
+        return;
+      }
+      if (typeof value === 'string' && value.trim().startsWith('<')) {
+        // SVG markup: replace element with markup
+        el.insertAdjacentHTML('beforebegin', value);
+        el.remove();
+      } else {
+        if (el.tagName === 'IMG') el.src = value;
+      }
+    }
+
+    // Logout modal
+    const logoutImg = container.querySelector('#popupModal img');
+    applyValueToElement(logoutImg, s.logoutSvg, `{{ 'logout.png' | asset_url }}`);
+
+    // Delete modals (addresses/orders/delete-confirm areas)
+    const deleteImgs = container.querySelectorAll('.deletecustom-modal img');
+    deleteImgs.forEach((img) => applyValueToElement(img, s.deleteSvg, `{{ 'delete.png' | asset_url }}`));
+
+    // No-orders image(s)
+    const noOrderImgs = container.querySelectorAll('.no-orders img');
+    noOrderImgs.forEach((img) => applyValueToElement(img, s.noOrdersImage, `{{ 'No_orders.png' | asset_url }}`));
+  }
+
+  {% comment %} window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+      document.querySelector('.tab-container').style.display = 'flex';
+
+      const activeTab = document.querySelector('.sub-menu.active-menu');
+      const tabName = activeTab ? activeTab.dataset.tab : 'details';
+
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+      const tabToShow = document.getElementById(tabName);
+      if (tabToShow) tabToShow.style.display = 'block';
+    } else {
+      document.querySelector('.tab-container').style.display = 'none';
+
+      const activeTab = document.querySelector('.sub-menu.active-menu');
+      const tabName = activeTab ? activeTab.dataset.tab : null;
+
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+      if (tabName) {
+        const tabToShow = document.getElementById(tabName);
+        if (tabToShow) tabToShow.style.display = 'block';
+      }
+    }
+  });
+
+  {% comment %} function goBackToMenu() {
+    if (window.innerWidth <= 768) {
+      document.querySelector('.tab-container').style.display = 'flex';
+      document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+    }
+  } {% endcomment %}
+  function goBackToMenu() {
+  if (window.innerWidth <= 768) {
+    // show menu
+    document.querySelector('.tab-container').style.display = 'flex';
+    document.querySelectorAll('.menu-content').forEach(el => el.style.display = 'none');
+
+    // 🔥 IMPORTANT: remove tab from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('tab');
+    window.history.replaceState({}, '', url);
+
+    // optional: remove active state
+    document.querySelectorAll('.sub-menu').forEach(b => b.classList.remove('active-menu'));
+  }
+}
+
+  
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.menu-content').forEach((el) => (el.style.display = 'none'));
+  } {% endcomment %}
+  function goBackToMenu() {
+  if (window.innerWidth <= 768) {
+    // show menu
+    document.querySelector('.tab-container').style.display = 'flex';
+    document.querySelectorAll('.menu-content').forEach(el => el.style.display = 'none');
+
+    // 🔥 IMPORTANT: remove tab from URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete('tab');
+    window.history.replaceState({}, '', url);
+
+    // Restore active state to the last opened tab (from window.lastActiveTab)
+    const lastTab = window.lastActiveTab || 'accountDetails';
+    document.querySelectorAll('.sub-menu').forEach(b => b.classList.remove('active-menu'));
+    const lastTabBtn = document.querySelector(`.sub-menu[data-tab="${lastTab}"]`);
+    if (lastTabBtn) lastTabBtn.classList.add('active-menu');
+  }
+}
+
+  window.addEventListener('resize', function () {
+  const isDesktop = window.innerWidth > 768;
+
+  // ✅ Ignore resize events caused by mobile scroll
+  if (isDesktop === lastIsDesktop) return;
+
+  lastIsDesktop = isDesktop;
+
+  if (isDesktop) {
+    // Switching TO desktop
+    document.querySelector('.tab-container').style.display = 'flex';
+
+    const activeTab = document.querySelector('.sub-menu.active-menu');
+    const tabName = activeTab ? activeTab.dataset.tab : null;
+
+    document.querySelectorAll('.menu-content').forEach(el => el.style.display = 'none');
+    if (tabName) {
+      const tabToShow = document.getElementById(tabName);
+      if (tabToShow) tabToShow.style.display = 'block';
+    }
+  } else {
+    // Switching TO mobile → show menu, hide content
+    document.querySelector('.tab-container').style.display = 'flex';
+    document.querySelectorAll('.menu-content').forEach(el => el.style.display = 'none');
+  }
+});
+
+</script>

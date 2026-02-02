@@ -62,6 +62,24 @@ model MenuSettings {
   id                  String   @id @default("singleton")
   shop          String
   menuTabs            Json
+
+  // Colors
+  colorPrimary   String @default("#000000")
+  colorSecondary String @default("#ffffff")
+  colorTertiary  String @default("#f4f6f8")
+  colorQuaternary String @default("#7983e61a")
+
+  // Fonts
+  fontPrimary   String?
+  fontSecondary String?
+  fontTertiary  String?
+
+  // SVG Icons
+  logoutSvg String?
+  deleteSvg String?
+  noOrdersImage String?
+
+
   cancelOrderBehavior String
   script              String?
   createdAt           DateTime @default(now())

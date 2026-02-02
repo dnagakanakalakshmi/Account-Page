@@ -1,6 +1,10 @@
+.container .main .account__page{
+    display: none;
+}
+
 .account-main-container {
     font-family: Poppins;
-    margin-bottom: 5%;
+    /* margin-bottom: 5%; */
     display: flex;
     flex-direction: row;
     overflow: hidden;
@@ -48,13 +52,13 @@
     width: 100%;
     display: flex;
     align-items: center;
-
+    position: relative;
 }
 
 .tab-title {
     color: rgba(86, 86, 86, 1);
     font-size: 14px;
-    margin-left: 30px;
+    margin-left: 10px;
 }
 
 .tab-menu .sub-menu:hover {
@@ -457,8 +461,8 @@
 }
 
 .loader-spinner{
-    border: 4px solid rgb(121, 131, 230, 0.1);
-    border-top: 4px solid rgba(132, 143, 252, 1);
+    border: 4px solid rgb(0, 0, 0, 0.1);
+    border-top: 4px solid rgba(0, 0, 0, 1);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -498,11 +502,12 @@
     .sub-tab-container {
         flex-basis: 100%;
         width: 100%;
+        margin-top: 0;
     }
 
     .tab-menu {
-        margin: 0 auto 20px auto;
-
+        margin: 20px;
+        max-width: 100%;
     }
 
     .sub-menu {
@@ -510,7 +515,29 @@
         font-size: 15px;
         height: auto;
         line-height: normal;
+        justify-content: space-between;
     }
+
+    .sub-menu::after {
+        content: '›';
+        font-size: 24px;
+        color: rgba(86, 86, 86, 0.5);
+        margin-right: 10px;
+    }
+
+    .tab-title{
+        margin-left: 10px;
+    }
+    /* .sub-menu.active-menu {
+        background: rgba(121, 131, 230, 0.2);
+        border-left: 4px solid rgba(121, 131, 230, 1);
+        padding-left: 16px;
+    }
+
+    .sub-menu.active-menu .tab-title {
+        font-weight: 600;
+        color: rgba(121, 131, 230, 1);
+    } */
 
     .sub-tab-container {
         padding-left: 10px;
@@ -577,23 +604,12 @@
         box-sizing: border-box;
     }
 
-
-    /* 
-    .profile-address-display {
-        padding: 10px;
-    } */
-
     .profile-email {
         word-break: break-word;
         overflow-wrap: break-word;
         white-space: normal;
     }
 
-    /* .edit-icon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    } */
 }
 
 @media (min-width: 769px) {

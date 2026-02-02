@@ -21,7 +21,7 @@
             {% for items in order.line_items %}
               <div class="itemsContainer">
                 <div class="item-img-title">
-                  <div class="itemImage"><img src="{{ items.image | image_url }}" alt="Ordered_Product_Image"></div>
+                  <div class="itemImage"><img src="{{ items.image | image_url }}" alt="Ordered_Product_Image" width="500px" height="500px"></div>
                   <div class="itemTitle">{{ items.title }}</div>
                 </div>
                 <div class="itemPrice">{{ items.original_price | money_with_currency }}</div>
@@ -259,7 +259,7 @@
   {% else %}
     <div class="no-orders">
        <img src="{{'No_orders.png' | asset_url}}" width="281px" height="168px"/>
-      <div class="no-orders-button"><a href="/collections/all">Continue Shopping</a></div>
+      <div class="no-orders-button"><a href="{{ routes.all_products_collection_url }}">Continue Shopping</a></div>
     </div>
   {% endif %}
 </div>

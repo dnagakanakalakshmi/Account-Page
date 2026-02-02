@@ -1,7 +1,6 @@
 import { json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db.server";
+import { apiVersion } from "../shopify.server";
 
 function getCorsHeaders(request) {
   const origin = request && request.headers && request.headers.get
@@ -79,7 +78,7 @@ export const loader = async ({ request }) => {
   const accessToken = session.accessToken
 
   try {
-    const response = await fetch(`https://${storeHostname}/admin/api/2024-04/graphql.json`, {
+    const response = await fetch(`https://${storeHostname}/admin/api/${apiVersion}/graphql.json`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

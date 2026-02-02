@@ -10,9 +10,10 @@ window.closeOrderDeletePop = function(orderId) {
 
 async function cancelOrder(button, storeUrl) {
     const orderId = button.getAttribute('data-order-id');
+    
     try {
         const { cancelOrderBehavior, script } = window.accountSettings;
-
+        console.log('Cancel Order Behavior:', cancelOrderBehavior, 'Script:', script);
         if (cancelOrderBehavior === "script" && script) {
             try {
                 closeOrderDeletePop(orderId);
@@ -200,6 +201,7 @@ function prevPage() {
     if (currentPage > 1) {
         currentPage--;
         renderPage();
+        scrollToTopOnMobile();
     }
 }
 
@@ -209,12 +211,25 @@ function nextPage() {
     if (currentPage < totalPages) {
         currentPage++;
         renderPage();
+        scrollToTopOnMobile();
     }
 }
 
 function goToPage(page) {
     currentPage = page;
     renderPage();
+    scrollToTopOnMobile();
+}
+
+// Scroll to top on mobile when pagination changes
+function scrollToTopOnMobile() {
+    // Only scroll on mobile (max-width: 768px)
+    if (window.innerWidth <= 768) {
+        const orderContainer = document.querySelector('.orders-main-container');
+        if (orderContainer) {
+            orderContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

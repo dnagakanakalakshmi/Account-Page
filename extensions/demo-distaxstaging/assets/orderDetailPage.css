@@ -952,15 +952,15 @@
 }
 
 .deletecancel-btn {
-    background-color: #848FFC !important;
+    background-color: #848FFC;
     color: #FFFFFF !important;
     width: 160px !important;
     height: 41px !important;
 }
 
 .deleteconfirm-btn {
-    background-color: #F7F7FF !important;
-    color: #848FFC !important;
+    background-color: #F7F7FF;
+    color: #848FFC;
     width: 160px !important;
     height: 41px !important;
 }

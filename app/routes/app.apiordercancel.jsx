@@ -1,7 +1,6 @@
 import { json } from "@remix-run/node";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../db.server";
+import { apiVersion } from "../shopify.server";
 
 function getCorsHeaders(request) {
   const origin = request && request.headers && request.headers.get
@@ -56,6 +55,7 @@ export const action = async ({ request }) => {
 
     const latestSession = await prisma.session.findFirst({
       where: { shop : storeHostname },
+      orderBy: { expires: "desc" }
     });
 
     if (!latestSession?.accessToken) {
@@ -66,7 +66,7 @@ export const action = async ({ request }) => {
     }
 
     const response = await fetch(
-      `https://${storeHostname}/admin/api/2023-10/orders/${orderId}/cancel.json`,
+      `https://${storeHostname}/admin/api/${apiVersion}/orders/${orderId}/cancel.json`,
       {
         method: "POST",
         headers: {
@@ -98,62 +98,3 @@ export const action = async ({ request }) => {
     );
   }
 };
-
-// export const action = async ({ request }) => {
-//     try {
-//         const body = await request.json();
-//         console.log("body", body)
-//         const id = body.orderId;
-
-//         const type = await prisma.cancelOrderType.findFirst();
-//         console.log("cancel type",type);
-//         if(type.cancelOrderBehavior=="script"){
-//             return json(
-//                     { success: false, redirection: true },
-//                     { headers: { "Access-Control-Allow-Origin": "*" } }
-//             );
-//         }
-
-//         const session = await prisma.session.findFirst({
-//             orderBy: { expires: "desc" },
-//         });
-//         if (!session || !session.accessToken) {
-//             throw new Error("Admin access token not found.");
-//         }
-//         const shopDomain = session.shop;
-//         const accessToken = session.accessToken;
-//         try {
-//             const response = await fetch(`https://${shopDomain}/admin/api/2023-10/orders/${id}/cancel.json`, {
-//                 method: 'POST',
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                     "X-Shopify-Access-Token": `${accessToken}`,
-//                 },
-//             });
-
-//             if (response.ok) {
-//                 return json(
-//                     { success: true },
-//                     { headers: { "Access-Control-Allow-Origin": "*" } }
-//                 );
-//             } else {
-//                 return json(
-//                     { success: false },
-//                     { headers: { "Access-Control-Allow-Origin": "*" } }
-//                 );
-//             }
-//         } catch (err) {
-//             console.log("api",err)
-//             return json(
-//                 { message: "Internal Server Error" },
-//                 { headers: { "Access-Control-Allow-Origin": "*" } }
-//             );
-//         }
-//     } catch (error) {
-//         console.log(error)
-//         return json(
-//             { message: "Internal Server Error" },
-//             { headers: { "Access-Control-Allow-Origin": "*" } }
-//         );
-//     }
-// };

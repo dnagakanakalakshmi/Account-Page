@@ -95,7 +95,7 @@
                   <form
                     class="address-delete-form"
                     method="post"
-                    action="/account/addresses/{{ customer.default_address.id }}"
+                    action="{{ routes.account_addresses_url }}/{{ customer.default_address.id }}"
                     onsubmit="handleDeleteSubmit(event,{{ customer.default_address.id }},{{ customer.id }},'{{ shop.url }}')"
                   >
                     <input type="hidden" name="_method" value="delete">
@@ -188,7 +188,7 @@
                       <form
                         class="address-delete-form"
                         method="post"
-                        action="/account/addresses/{{ address.id }}"
+                        action="{{ routes.account_addresses_url }}/{{ address.id }}"
                         onsubmit="handleDeleteSubmit(event,{{ address.id }},{{ customer.id }},'{{ shop.url }}')"
                       >
                         <input type="hidden" name="_method" value="delete">
@@ -217,7 +217,7 @@
     <div class=" profile-details-display">
       <form
         method="post"
-        action="/account/addresses"
+        action="{{ routes.account_addresses_url }}"
         id="add-address-form"
         onsubmit="handleAddAddress(event,{{customer.id}},'{{ shop.url }}')"
       >
